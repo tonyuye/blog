@@ -212,4 +212,46 @@ canvas.addEventListener('touchend', (e) => {
   if (absX > absY) {
     trySetDir(dx > 0 ? 1 : -1, 0);
   } else {
-    trySetDir(0, dy
+    trySetDir(0, dy > 0 ? 1 : -1);
+  }
+  touchStart = null;
+}, { passive: true });
+
+// UI 连接
+startBtn.addEventListener('click', () => resetGame());
+speedInput.addEventListener('input', () => {
+  setTickFromSpeed();
+  if (running) restartLoop();
+});
+
+// 处理画布像素比例以保证清晰
+function fixCanvasDPI() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = Math.floor(rect.width * dpr);
+  canvas.height = Math.floor(rect.height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // scale drawing coordinates
+  // 调整 gridSize 以适配高分屏（保持逻辑格）
+  // 保持 gridSize 为 20 CSS 像素：canvas 实际像素会被 transform 处理
+}
+window.addEventListener('resize', () => {
+  fixCanvasDPI();
+  resizeGrid();
+  draw();
+});
+
+// 初始化
+(function init(){
+  // 确保 canvas CSS 尺寸（在页面中设置为 480x480）
+  // Fix ratio then start
+  fixCanvasDPI();
+  resizeGrid();
+  // draw 初始场景
+  // 清空画布并显示提示
+  ctx.fillStyle = '#081824';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#9ca3af';
+  ctx.font = '16px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('点击 "开始 / 重置" 开始游戏', canvas.width / 2, canvas.height / 2);
+})();
