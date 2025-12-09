@@ -43,6 +43,9 @@ canvas{
   display:block;
   margin:0 auto 12px;
   box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+  /* 关键：允许在 canvas 上处理滑动手势，不让浏览器把手势当作页面滚动 */
+  touch-action: none;
+  -ms-touch-action: none;
 }
 .controls{
   display:flex;

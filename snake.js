@@ -1,6 +1,5 @@
-// 贪吃蛇主逻辑（Canvas） — 修正版
-// 支持键盘 + WASD + 触摸滑动，速度可调
-// 更稳健地处理高 DPR / 移动端布局，避免 cols/rows 为 0 导致的无限循环
+// 贪吃蛇主逻辑（Canvas） — 触控增强版 + DPI/网格稳健处理
+// 支持键盘 + WASD + 触摸滑动 + pointer events，速度可调
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -23,7 +22,6 @@ let running = false;
 // 获取 canvas 的 CSS 大小（返回 CSS 像素）
 function getCanvasCssSize() {
   const rect = canvas.getBoundingClientRect();
-  // 回退到 clientWidth/clientHeight 或属性默认值，防止某些环境 rect 为 0
   const cssW = rect.width || canvas.clientWidth || 480;
   const cssH = rect.height || canvas.clientHeight || 480;
   return { cssW, cssH };
@@ -34,15 +32,12 @@ function fixCanvasDPI() {
   const dpr = window.devicePixelRatio || 1;
   const { cssW, cssH } = getCanvasCssSize();
 
-  // 设置 canvas 的实际像素尺寸为 CSS 尺寸 * dpr
   canvas.width = Math.max(1, Math.floor(cssW * dpr));
   canvas.height = Math.max(1, Math.floor(cssH * dpr));
 
-  // 强制设置样式宽高为 CSS 像素（有助于布局稳定）
   canvas.style.width = cssW + 'px';
   canvas.style.height = cssH + 'px';
 
-  // 使用 scale/transform，把绘制坐标当作 CSS 像素来处理
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
@@ -56,7 +51,6 @@ function resizeGrid() {
 // 随机放苹果，确保不与蛇重合；增加最大尝试次数防止死循环
 function placeApple() {
   if (!cols || !rows) {
-    // 防御：如果网格还没准备好，放到 (0,0) 作为占位（会在下一次 resetGame 重新放置）
     apple = { x: 0, y: 0 };
     return;
   }
@@ -69,7 +63,6 @@ function placeApple() {
       return;
     }
   }
-  // 极少数情况：找不到位置，退而求其次放到头后面
   apple = { x: snake[0].x, y: snake[0].y };
 }
 
@@ -104,34 +97,27 @@ function setTickFromSpeed() {
 
 // 游戏循环（move + draw）
 function gameTick() {
-  // 处理方向
   dir = nextDir;
 
-  // 计算新头
   const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
 
-  // 墙体判断（游戏结束）
   if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows) {
     gameOver();
     return;
   }
 
-  // 自己碰撞
   if (snake.some(p => p.x === head.x && p.y === head.y)) {
     gameOver();
     return;
   }
 
-  // 推入新头
   snake.unshift(head);
 
-  // 吃到苹果
   if (head.x === apple.x && head.y === apple.y) {
     score += 1;
     scoreEl.textContent = score;
     placeApple();
   } else {
-    // 移除尾巴
     snake.pop();
   }
 
@@ -140,14 +126,11 @@ function gameTick() {
 
 // 绘制场景
 function draw() {
-  // 背景（使用 CSS 像素坐标）
   const { cssW, cssH } = getCanvasCssSize();
   ctx.clearRect(0, 0, cssW, cssH);
 
-  // 苹果
   drawCell(apple.x, apple.y, '#ef4444');
 
-  // 蛇
   for (let i = 0; i < snake.length; i++) {
     const p = snake[i];
     const color = i === 0 ? '#34d399' : '#10b981';
@@ -196,7 +179,7 @@ function restartLoop() {
   }, tickInterval);
 }
 
-// 控制输入
+// 键盘控制
 window.addEventListener('keydown', (e) => {
   const k = e.key;
   if (k === 'ArrowUp' || k === 'w' || k === 'W') trySetDir(0, -1);
@@ -215,28 +198,80 @@ function trySetDir(x, y) {
   nextDir = { x, y };
 }
 
-// 触摸滑动支持
+// --- 触控 / pointer 逻辑（增强） ---
 let touchStart = null;
+let lastTouch = null;
+const SWIPE_THRESHOLD = 6; // px, 减小阈值以便小幅滑动也能识别
+
+// Touch events
 canvas.addEventListener('touchstart', (e) => {
   const t = e.touches[0];
   touchStart = { x: t.clientX, y: t.clientY };
+  lastTouch = { ...touchStart };
+}, { passive: true });
+
+canvas.addEventListener('touchmove', (e) => {
+  // 更新 lastTouch，便于快速滑动也能识别方向
+  const t = e.touches[0];
+  lastTouch = { x: t.clientX, y: t.clientY };
 }, { passive: true });
 
 canvas.addEventListener('touchend', (e) => {
   if (!touchStart) return;
-  const t = e.changedTouches[0];
-  const dx = t.clientX - touchStart.x;
-  const dy = t.clientY - touchStart.y;
-  const absX = Math.abs(dx);
-  const absY = Math.abs(dy);
-  if (Math.max(absX, absY) < 10) return;
-  if (absX > absY) {
-    trySetDir(dx > 0 ? 1 : -1, 0);
-  } else {
-    trySetDir(0, dy > 0 ? 1 : -1);
+  // 使用 lastTouch 如果可用，否则使用 changedTouches[0]
+  const t = (lastTouch && lastTouch.x !== undefined) ? lastTouch : (e.changedTouches && e.changedTouches[0]) || null;
+  if (!t) { touchStart = null; lastTouch = null; return; }
+  const dx = t.x - touchStart.x;
+  const dy = t.y - touchStart.y;
+  const absX = Math.abs(dx), absY = Math.abs(dy);
+  if (Math.max(absX, absY) >= SWIPE_THRESHOLD) {
+    if (absX > absY) {
+      trySetDir(dx > 0 ? 1 : -1, 0);
+    } else {
+      trySetDir(0, dy > 0 ? 1 : -1);
+    }
   }
   touchStart = null;
+  lastTouch = null;
 }, { passive: true });
+
+// Pointer events（更统一的处理，兼容某些浏览器/设备）
+canvas.addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'touch' || e.pointerType === 'pen' || e.pointerType === 'mouse') {
+    touchStart = { x: e.clientX, y: e.clientY };
+    lastTouch = { ...touchStart };
+    // 捕获指针，确保 pointerup 在 canvas 上仍能触发
+    try { canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  }
+});
+
+canvas.addEventListener('pointermove', (e) => {
+  if (!touchStart) return;
+  lastTouch = { x: e.clientX, y: e.clientY };
+});
+
+canvas.addEventListener('pointerup', (e) => {
+  if (!touchStart) return;
+  const dx = e.clientX - touchStart.x;
+  const dy = e.clientY - touchStart.y;
+  const absX = Math.abs(dx), absY = Math.abs(dy);
+  if (Math.max(absX, absY) >= SWIPE_THRESHOLD) {
+    if (absX > absY) {
+      trySetDir(dx > 0 ? 1 : -1, 0);
+    } else {
+      trySetDir(0, dy > 0 ? 1 : -1);
+    }
+  }
+  try { canvas.releasePointerCapture && canvas.releasePointerCapture(e.pointerId); } catch (err) {}
+  touchStart = null;
+  lastTouch = null;
+});
+
+canvas.addEventListener('pointercancel', () => {
+  touchStart = null;
+  lastTouch = null;
+});
+// --- end 触控 / pointer 逻辑 ---
 
 // UI 连接
 startBtn.addEventListener('click', () => resetGame());
@@ -256,7 +291,6 @@ window.addEventListener('resize', () => {
 (function init(){
   fixCanvasDPI();
   resizeGrid();
-  // 初始化画面提示
   const { cssW, cssH } = getCanvasCssSize();
   ctx.fillStyle = '#081824';
   ctx.fillRect(0, 0, cssW, cssH);
