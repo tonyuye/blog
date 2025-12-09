@@ -1,5 +1,6 @@
-// 贪吃蛇主逻辑（Canvas）
+// 贪吃蛇主逻辑（Canvas） — 修正版
 // 支持键盘 + WASD + 触摸滑动，速度可调
+// 更稳健地处理高 DPR / 移动端布局，避免 cols/rows 为 0 导致的无限循环
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -8,8 +9,8 @@ const scoreEl = document.getElementById('score');
 const speedInput = document.getElementById('speed');
 const speedDisplay = document.getElementById('speedDisplay');
 
-let gridSize = 20; // 每格像素
-let cols, rows;
+let gridSize = 20; // 每格（CSS像素）
+let cols = 0, rows = 0;
 let snake;
 let apple;
 let dir;
@@ -19,29 +20,64 @@ let timerId;
 let tickInterval = 1000 / 10; // 毫秒，初始速度 10
 let running = false;
 
-// 初始化网格大小以适配画布尺寸（确保为整格）
-function resizeGrid() {
-  const width = canvas.width;
-  const height = canvas.height;
-  cols = Math.floor(width / gridSize);
-  rows = Math.floor(height / gridSize);
+// 获取 canvas 的 CSS 大小（返回 CSS 像素）
+function getCanvasCssSize() {
+  const rect = canvas.getBoundingClientRect();
+  // 回退到 clientWidth/clientHeight 或属性默认值，防止某些环境 rect 为 0
+  const cssW = rect.width || canvas.clientWidth || 480;
+  const cssH = rect.height || canvas.clientHeight || 480;
+  return { cssW, cssH };
 }
 
-// 随机放苹果，确保不与蛇重合
+// 处理画布像素比例以保证清晰（并保持 CSS 大小不变）
+function fixCanvasDPI() {
+  const dpr = window.devicePixelRatio || 1;
+  const { cssW, cssH } = getCanvasCssSize();
+
+  // 设置 canvas 的实际像素尺寸为 CSS 尺寸 * dpr
+  canvas.width = Math.max(1, Math.floor(cssW * dpr));
+  canvas.height = Math.max(1, Math.floor(cssH * dpr));
+
+  // 强制设置样式宽高为 CSS 像素（有助于布局稳定）
+  canvas.style.width = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+
+  // 使用 scale/transform，把绘制坐标当作 CSS 像素来处理
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+// 初始化网格大小以适配画布 CSS 尺寸（使用 CSS 像素）
+function resizeGrid() {
+  const { cssW, cssH } = getCanvasCssSize();
+  cols = Math.max(1, Math.floor(cssW / gridSize));
+  rows = Math.max(1, Math.floor(cssH / gridSize));
+}
+
+// 随机放苹果，确保不与蛇重合；增加最大尝试次数防止死循环
 function placeApple() {
-  while (true) {
+  if (!cols || !rows) {
+    // 防御：如果网格还没准备好，放到 (0,0) 作为占位（会在下一次 resetGame 重新放置）
+    apple = { x: 0, y: 0 };
+    return;
+  }
+  const maxAttempts = 1000;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const ax = Math.floor(Math.random() * cols);
     const ay = Math.floor(Math.random() * rows);
     if (!snake.some(p => p.x === ax && p.y === ay)) {
       apple = { x: ax, y: ay };
-      break;
+      return;
     }
   }
+  // 极少数情况：找不到位置，退而求其次放到头后面
+  apple = { x: snake[0].x, y: snake[0].y };
 }
 
 // 重置游戏
 function resetGame() {
+  fixCanvasDPI();
   resizeGrid();
+
   snake = [];
   const startLen = 4;
   const startX = Math.floor(cols / 2);
@@ -63,7 +99,7 @@ function resetGame() {
 function setTickFromSpeed() {
   const speed = parseInt(speedInput.value, 10);
   speedDisplay.textContent = speed;
-  tickInterval = 1000 / speed;
+  tickInterval = 1000 / Math.max(1, speed);
 }
 
 // 游戏循环（move + draw）
@@ -74,7 +110,7 @@ function gameTick() {
   // 计算新头
   const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
 
-  // 墙体判断（游戏结束或穿墙 - 这里设为结束）
+  // 墙体判断（游戏结束）
   if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows) {
     gameOver();
     return;
@@ -104,41 +140,27 @@ function gameTick() {
 
 // 绘制场景
 function draw() {
-  // 背景
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // 绘制网格（可选）
-  // ctx.strokeStyle = 'rgba(255,255,255,0.02)';
-  // for (let x = 0; x < cols; x++) {
-  //   for (let y = 0; y < rows; y++) {
-  //     ctx.strokeRect(x*gridSize, y*gridSize, gridSize, gridSize);
-  //   }
-  // }
+  // 背景（使用 CSS 像素坐标）
+  const { cssW, cssH } = getCanvasCssSize();
+  ctx.clearRect(0, 0, cssW, cssH);
 
   // 苹果
-  ctx.fillStyle = '#ef4444';
   drawCell(apple.x, apple.y, '#ef4444');
 
   // 蛇
   for (let i = 0; i < snake.length; i++) {
     const p = snake[i];
-    // 头部颜色更亮
     const color = i === 0 ? '#34d399' : '#10b981';
     drawCell(p.x, p.y, color, i === 0);
   }
 }
 
-// 在格子位置绘制方块
+// 在格子位置绘制方块（使用 CSS 像素坐标）
 function drawCell(x, y, color, head = false) {
   const px = x * gridSize;
   const py = y * gridSize;
   ctx.fillStyle = color;
-  if (head) {
-    // 略作高亮与圆角
-    roundRect(ctx, px + 1, py + 1, gridSize - 2, gridSize - 2, 4, true, false);
-  } else {
-    roundRect(ctx, px + 1, py + 1, gridSize - 2, gridSize - 2, 4, true, false);
-  }
+  roundRect(ctx, px + 1, py + 1, gridSize - 2, gridSize - 2, 4);
 }
 
 // 辅助：绘制圆角矩形
@@ -157,13 +179,13 @@ function roundRect(ctx, x, y, w, h, r) {
 function gameOver() {
   running = false;
   clearInterval(timerId);
-  // 在画布上显示提示
+  const { cssW, cssH } = getCanvasCssSize();
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
-  ctx.fillRect(0, canvas.height / 2 - 30, canvas.width, 60);
+  ctx.fillRect(0, cssH / 2 - 30, cssW, 60);
   ctx.fillStyle = '#fff';
   ctx.font = '18px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText('游戏结束！点击 “开始 / 重置” 重玩', canvas.width / 2, canvas.height / 2 + 6);
+  ctx.fillText('游戏结束！点击 “开始 / 重置” 重玩', cssW / 2, cssH / 2 + 6);
 }
 
 // 启动/重启循环
@@ -182,7 +204,6 @@ window.addEventListener('keydown', (e) => {
   if (k === 'ArrowLeft' || k === 'a' || k === 'A') trySetDir(-1, 0);
   if (k === 'ArrowRight' || k === 'd' || k === 'D') trySetDir(1, 0);
   if (k === ' ' || k === 'Enter') {
-    // 空格或回车开始/重置
     resetGame();
   }
 });
@@ -224,16 +245,7 @@ speedInput.addEventListener('input', () => {
   if (running) restartLoop();
 });
 
-// 处理画布像素比例以保证清晰
-function fixCanvasDPI() {
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = Math.floor(rect.width * dpr);
-  canvas.height = Math.floor(rect.height * dpr);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // scale drawing coordinates
-  // 调整 gridSize 以适配高分屏（保持逻辑格）
-  // 保持 gridSize 为 20 CSS 像素：canvas 实际像素会被 transform 处理
-}
+// 窗口尺寸变化时调整
 window.addEventListener('resize', () => {
   fixCanvasDPI();
   resizeGrid();
@@ -242,16 +254,14 @@ window.addEventListener('resize', () => {
 
 // 初始化
 (function init(){
-  // 确保 canvas CSS 尺寸（在页面中设置为 480x480）
-  // Fix ratio then start
   fixCanvasDPI();
   resizeGrid();
-  // draw 初始场景
-  // 清空画布并显示提示
+  // 初始化画面提示
+  const { cssW, cssH } = getCanvasCssSize();
   ctx.fillStyle = '#081824';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, cssW, cssH);
   ctx.fillStyle = '#9ca3af';
   ctx.font = '16px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText('点击 "开始 / 重置" 开始游戏', canvas.width / 2, canvas.height / 2);
+  ctx.fillText('点击 "开始 / 重置" 开始游戏', cssW / 2, cssH / 2);
 })();
