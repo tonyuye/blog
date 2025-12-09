@@ -1,210 +1,277 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>国家药食同源物质目录展示（汇总版）</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        "PingFang SC", "Microsoft YaHei", sans-serif;
-      background-color: #f5f5f7;
-      color: #222;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 药食同源目录 | 106种既是食品又是中药材</title>
+    <style>
+        :root {
+            --bg-color: #f7f4ed; /* 宣纸白 */
+            --card-bg: #fffbf0;
+            --text-primary: #3e3c3a; /* 墨色 */
+            --text-secondary: #8b5a2b; /* 赭石 */
+            --accent-color: #5d7259; /* 竹青 */
+            --border-color: #e0d8c3;
+        }
 
-    .page {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 24px 16px 40px;
-    }
+        body {
+            font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            background-image: radial-gradient(#e6e2d8 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
 
-    header {
-      margin-bottom: 32px;
-    }
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(to bottom, #f7f4ed, #eeeadd);
+            border-bottom: 2px solid var(--text-secondary);
+        }
 
-    header h1 {
-      font-size: 28px;
-      margin: 0 0 10px;
-      letter-spacing: 1px;
-    }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+            letter-spacing: 2px;
+        }
 
-    header p {
-      margin: 4px 0;
-      font-size: 14px;
-      color: #555;
-      line-height: 1.6;
-    }
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: bold;
+        }
 
-    header .meta {
-      font-size: 12px;
-      color: #888;
-      margin-top: 6px;
-    }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
 
-    .tag-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 14px;
-    }
+        /* 搜索框样式 */
+        .search-box {
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            margin-bottom: 30px;
+            text-align: center;
+        }
 
-    .tag {
-      font-size: 12px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: #e5f5ee;
-      color: #177a4b;
-      border: 1px solid #c4ebdd;
-      white-space: nowrap;
-    }
+        #search-input {
+            width: 80%;
+            max-width: 500px;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            border: 2px solid var(--accent-color);
+            border-radius: 50px;
+            background-color: rgba(255, 255, 255, 0.95);
+            font-family: inherit;
+            box-shadow: 0 4px 15px rgba(93, 114, 89, 0.2);
+            outline: none;
+            transition: all 0.3s ease;
+        }
 
-    main {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
+        #search-input:focus {
+            box-shadow: 0 4px 20px rgba(93, 114, 89, 0.4);
+            transform: scale(1.02);
+        }
 
-    .group {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 18px 16px 16px;
-      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
-    }
+        /* 统计信息 */
+        .count-info {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+            font-size: 0.9rem;
+        }
 
-    .group-header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 6px;
-      margin-bottom: 12px;
-      border-bottom: 1px solid #f0f0f0;
-      padding-bottom: 8px;
-    }
+        /* 网格布局 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px;
+        }
 
-    .group-title {
-      font-size: 16px;
-      font-weight: 600;
-    }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px 10px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+            cursor: default;
+        }
 
-    .group-meta {
-      font-size: 12px;
-      color: #777;
-    }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border-color: var(--accent-color);
+        }
 
-    .item-list {
-      list-style: none;
-      padding: 0;
-      margin: 8px 0 0;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-      gap: 8px;
-    }
+        /* 卡片内装饰性背景字 */
+        .card::before {
+            content: attr(data-char);
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 5rem;
+            opacity: 0.05;
+            font-family: "Kaiti SC", "KaiTi", serif;
+            pointer-events: none;
+        }
 
-    .item {
-      font-size: 13px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: #f7fafc;
-      border: 1px solid #e2e8f0;
-      text-align: center;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+        .herb-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
 
-    .item:hover {
-      background: #edf2ff;
-      border-color: #c3dafe;
-    }
+        .herb-detail {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
 
-    footer {
-      margin-top: 28px;
-      font-size: 12px;
-      color: #888;
-      line-height: 1.6;
-    }
+        .batch-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 8px;
+            opacity: 0.7;
+        }
 
-    @media (max-width: 600px) {
-      .page {
-        padding: 18px 12px 28px;
-      }
-      header h1 {
-        font-size: 22px;
-      }
-    }
-  </style>
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            color: #888;
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 50px;
+        }
+
+        footer a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+            #search-input { width: 90%; }
+        }
+    </style>
 </head>
 <body>
-  <div class="page">
-    <header>
-      <h1>国家药食同源物质目录展示</h1>
-      <p>本页面依据国家卫生健康委员会及原卫生部正式发布文件，将“既是食品又是中药材”的物质目录做成可视化展示，方便查询与科普。</p>
-      <p>实际生产、使用须严格遵守《食品安全法》及相关配套规定，本页面仅为信息整理与展示，不构成任何医疗或产品宣传依据。</p>
-      <div class="meta">
-        数据整理截止：依据公开文件截至 2024-08-26 已发布的四批目录
-      </div>
 
-      <div class="tag-bar">
-        <span class="tag">药食同源</span>
-        <span class="tag">国家目录</span>
-        <span class="tag">中药材&食品</span>
-      </div>
-    </header>
+<header>
+    <h1>药食同源目录</h1>
+    <div class="subtitle">2025年版 · 共106种 · 既是食品又是中药材</div>
+</header>
 
-    <main>
-      <!-- 第一批：2002 年 卫法监发[2002]51号 -->
-      <section class="group">
-        <div class="group-header">
-          <div class="group-title">第一批：既是食品又是药品的物品名单</div>
-          <div class="group-meta">
-            文件：卫法监发〔2002〕51 号（原卫生部）<br />
-            《卫生部关于进一步规范保健食品原料管理的通知》附件
-          </div>
-        </div>
-        <ul class="item-list">
-          <li class="item">丁香</li>
-          <li class="item">八角茴香</li>
-          <li class="item">刀豆</li>
-          <li class="item">小茴香</li>
-          <li class="item">小蓟</li>
-          <li class="item">山药</li>
-          <li class="item">山楂</li>
-          <li class="item">马齿苋</li>
-          <li class="item">乌梢蛇</li>
-          <li class="item">乌梅</li>
-          <li class="item">木瓜</li>
-          <li class="item">火麻仁</li>
-          <li class="item">代代花</li>
-          <li class="item">玉竹</li>
-          <li class="item">甘草</li>
-          <li class="item">白芷</li>
-          <li class="item">白果</li>
-          <li class="item">白扁豆</li>
-          <li class="item">白扁豆花</li>
-          <li class="item">龙眼肉（桂圆）</li>
-          <li class="item">决明子</li>
-          <li class="item">百合</li>
-          <li class="item">肉豆蔻</li>
-          <li class="item">肉桂</li>
-          <li class="item">余甘子</li>
-          <li class="item">佛手</li>
-          <li class="item">杏仁（甜、苦）</li>
-          <li class="item">沙棘</li>
-          <li class="item">牡蛎</li>
-          <li class="item">芡实</li>
-          <li class="item">花椒</li>
-          <li class="item">赤小豆</li>
-          <li class="item">阿胶</li>
-          <li class="item">鸡内金</li>
-          <li class="item">麦芽</li>
-          <li class="item">昆布</li>
-          <li class="item">枣（大枣、酸枣、黑枣）</li>
-          <li class="item">罗汉果</li>
-          <li class="item">郁李仁</li>
-          <li class="item">金银花</li>
-          <li class="item">青果</li>
-          <li class="item">鱼腥草</li>
-          <li class="item">姜（生姜、干姜）</li>
-          <li class="item">枳椇子</li>
-          <li class="item">
+<div class="container">
+    <div class="search-box">
+        <input type="text" id="search-input" placeholder="搜索药材（如：人参、枸杞...）">
+    </div>
+
+    <div class="count-info" id="count-display">当前显示 106 种</div>
+
+    <div class="grid" id="herb-grid">
+        <!-- 内容将通过 JavaScript 动态生成 -->
+    </div>
+</div>
+
+<footer>
+    <p>数据来源：国务院卫生行政部门发布（截至2025年9月）</p>
+    <p>仅供参考，具体使用请遵医嘱</p>
+    <p>Designed for GitHub Pages</p>
+</footer>
+
+<script>
+    // 完整的106种药食同源目录数据
+    const rawData = [
+        "丁香", "八角茴香", "刀豆", "小茴香", "小蓟", "山药", "山楂", "马齿苋", "乌梢蛇", "乌梅", 
+        "木瓜", "火麻仁", "代代花", "玉竹", "甘草", "白芷", "白果", "白扁豆", "白扁豆花", "龙眼肉（桂圆）", 
+        "决明子", "百合", "肉豆蔻", "肉桂", "余甘子", "佛手", "杏仁（甜、苦）", "沙棘", "牡蛎", "芡实", 
+        "花椒", "赤小豆", "阿胶", "鸡内金", "麦芽", "昆布", "枣（大枣、酸枣、黑枣）", "罗汉果", "郁李仁", "金银花", 
+        "青果", "鱼腥草", "姜（生姜、干姜）", "枳椇子", "枸杞子", "栀子", "砂仁", "胖大海", "茯苓", "香橼", 
+        "香薷", "桃仁", "桑叶", "桑椹", "桔红", "桔梗", "益智仁", "荷叶", "莱菔子", "莲子", 
+        "高良姜", "淡竹叶", "淡豆豉", "菊花", "菊苣", "黄芥子", "黄精", "紫苏", "紫苏籽", "葛根", 
+        "黑芝麻", "黑胡椒", "槐米", "槐花", "蒲公英", "蜂蜜", "榧子", "酸枣仁", "鲜白茅根", "鲜芦根", 
+        "蝮蛇", "橘皮", "薄荷", "薏苡仁", "薤白", "覆盆子", "藿香", "当归", "山柰", "西红花（藏红花）", 
+        "草果", "姜黄", "荜茇", "党参", "肉苁蓉（荒漠）", "铁皮石斛", "西洋参", "黄芪", "灵芝", "山茱萸", 
+        "天麻", "杜仲叶", "地黄", "麦冬", "天冬", "化橘红"
+    ];
+
+    // 处理数据，生成对象数组
+    const herbs = rawData.map((item, index) => {
+        // 提取主要名称和备注（括号内的内容）
+        let name = item;
+        let note = "";
+        
+        if (item.includes("（") || item.includes("(")) {
+            const parts = item.split(/[（(]/);
+            name = parts[0];
+            note = parts[1].replace(/[）)]/, "");
+        }
+
+        return {
+            id: index + 1,
+            fullName: item, // 用于搜索
+            name: name,     // 用于显示大标题
+            note: note      // 用于显示备注
+        };
+    });
+
+    const grid = document.getElementById('herb-grid');
+    const searchInput = document.getElementById('search-input');
+    const countDisplay = document.getElementById('count-display');
+
+    // 渲染函数
+    function render(list) {
+        grid.innerHTML = '';
+        list.forEach(herb => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            // 取第一个字作为背景装饰
+            card.setAttribute('data-char', herb.name.charAt(0));
+
+            let html = `<div class="herb-name">${herb.name}</div>`;
+            
+            if (herb.note) {
+                html += `<div class="herb-detail">${herb.note}</div>`;
+            }
+
+            // 添加序号作为模拟批次/ID
+            html += `<div class="batch-tag">NO.${herb.id}</div>`;
+
+            card.innerHTML = html;
+            grid.appendChild(card);
+        });
+        countDisplay.textContent = `当前显示 ${list.length} 种`;
+    }
+
+    // 初始渲染
+    render(herbs);
+
+    // 搜索功能
+    searchInput.addEventListener('input', (e) => {
+        const keyword = e.target.value.trim().toLowerCase();
+        const filtered = herbs.filter(herb => 
+            herb.fullName.toLowerCase().includes(keyword)
+        );
+        render(filtered);
+    });
+
+</script>
+
+</body>
+</html>
