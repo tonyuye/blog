@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>国家药食同源物质目录展示（汇总版）</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "PingFang SC", "Microsoft YaHei", sans-serif;
+      background-color: #f5f5f7;
+      color: #222;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    header {
+      margin-bottom: 32px;
+    }
+
+    header h1 {
+      font-size: 28px;
+      margin: 0 0 10px;
+      letter-spacing: 1px;
+    }
+
+    header p {
+      margin: 4px 0;
+      font-size: 14px;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    header .meta {
+      font-size: 12px;
+      color: #888;
+      margin-top: 6px;
+    }
+
+    .tag-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .tag {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #e5f5ee;
+      color: #177a4b;
+      border: 1px solid #c4ebdd;
+      white-space: nowrap;
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .group {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 18px 16px 16px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    .group-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 8px;
+    }
+
+    .group-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .group-meta {
+      font-size: 12px;
+      color: #777;
+    }
+
+    .item-list {
+      list-style: none;
+      padding: 0;
+      margin: 8px 0 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+    }
+
+    .item {
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item:hover {
+      background: #edf2ff;
+      border-color: #c3dafe;
+    }
+
+    footer {
+      margin-top: 28px;
+      font-size: 12px;
+      color: #888;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 600px) {
+      .page {
+        padding: 18px 12px 28px;
+      }
+      header h1 {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>国家药食同源物质目录展示</h1>
+      <p>本页面依据国家卫生健康委员会及原卫生部正式发布文件，将“既是食品又是中药材”的物质目录做成可视化展示，方便查询与科普。</p>
+      <p>实际生产、使用须严格遵守《食品安全法》及相关配套规定，本页面仅为信息整理与展示，不构成任何医疗或产品宣传依据。</p>
+      <div class="meta">
+        数据整理截止：依据公开文件截至 2024-08-26 已发布的四批目录
+      </div>
+
+      <div class="tag-bar">
+        <span class="tag">药食同源</span>
+        <span class="tag">国家目录</span>
+        <span class="tag">中药材&食品</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- 第一批：2002 年 卫法监发[2002]51号 -->
+      <section class="group">
+        <div class="group-header">
+          <div class="group-title">第一批：既是食品又是药品的物品名单</div>
+          <div class="group-meta">
+            文件：卫法监发〔2002〕51 号（原卫生部）<br />
+            《卫生部关于进一步规范保健食品原料管理的通知》附件
+          </div>
+        </div>
+        <ul class="item-list">
+          <li class="item">丁香</li>
+          <li class="item">八角茴香</li>
+          <li class="item">刀豆</li>
+          <li class="item">小茴香</li>
+          <li class="item">小蓟</li>
+          <li class="item">山药</li>
+          <li class="item">山楂</li>
+          <li class="item">马齿苋</li>
+          <li class="item">乌梢蛇</li>
+          <li class="item">乌梅</li>
+          <li class="item">木瓜</li>
+          <li class="item">火麻仁</li>
+          <li class="item">代代花</li>
+          <li class="item">玉竹</li>
+          <li class="item">甘草</li>
+          <li class="item">白芷</li>
+          <li class="item">白果</li>
+          <li class="item">白扁豆</li>
+          <li class="item">白扁豆花</li>
+          <li class="item">龙眼肉（桂圆）</li>
+          <li class="item">决明子</li>
+          <li class="item">百合</li>
+          <li class="item">肉豆蔻</li>
+          <li class="item">肉桂</li>
+          <li class="item">余甘子</li>
+          <li class="item">佛手</li>
+          <li class="item">杏仁（甜、苦）</li>
+          <li class="item">沙棘</li>
+          <li class="item">牡蛎</li>
+          <li class="item">芡实</li>
+          <li class="item">花椒</li>
+          <li class="item">赤小豆</li>
+          <li class="item">阿胶</li>
+          <li class="item">鸡内金</li>
+          <li class="item">麦芽</li>
+          <li class="item">昆布</li>
+          <li class="item">枣（大枣、酸枣、黑枣）</li>
+          <li class="item">罗汉果</li>
+          <li class="item">郁李仁</li>
+          <li class="item">金银花</li>
+          <li class="item">青果</li>
+          <li class="item">鱼腥草</li>
+          <li class="item">姜（生姜、干姜）</li>
+          <li class="item">枳椇子</li>
+          <li class="item">
